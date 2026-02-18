@@ -228,6 +228,9 @@ int64_t GetNumberOfBlocks(absl::Span<const int64_t> dimensions,
   int64_t num_blocks = 1;
   for (auto [dim_size, dim_tile_size] : llvm::zip(dimensions, tile_sizes)) {
     num_blocks *= (dim_size + dim_tile_size - 1) / dim_tile_size;
+    VLOG(0) << "TritonFusion::GetLaunchConfig: dim_size(" << dim_size
+            << ") x dim_tile_size( " << dim_tile_size << " ) = num_blocks("
+            << num_blocks << ");";
   }
   return num_blocks;
 }
@@ -250,6 +253,7 @@ std::optional<TritonFusion::LaunchConfig> TritonFusion::GetLaunchConfig(
                                  block_level_parameters.output_tile_sizes[i]),
                num_blocks);
     }
+    VLOG(0) << "TritonFusion::GetLaunchConfig: num_blocks: " << num_blocks;
 
     LaunchConfig launch_config;
     // TODO(b/451901200): We eventually also want to be able to predict this
