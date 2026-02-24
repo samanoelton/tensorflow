@@ -29,6 +29,7 @@ limitations under the License.
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IRReader/IRReader.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -147,12 +148,52 @@ std::string GenerateHeaderContent(const xla::EmbeddedConstantBuffers& buffers,
 
 }  // namespace
 
+static void InitializeTargets() {
+  // Print all registered targets.
+  for (const auto& T : llvm::TargetRegistry::targets()) {
+    llvm::errs() << "Registered: " << T.getName() << "\n";
+  }
+  // Initialize all LLVM targets so we can cross compile.
+#if TF_LLVM_AARCH32_AVAILABLE
+  LLVMInitializeARMTargetInfo();
+  LLVMInitializeARMTarget();
+  LLVMInitializeARMTargetMC();
+  LLVMInitializeARMAsmPrinter();
+#endif
+#if TF_LLVM_AARCH64_AVAILABLE
+  LLVMInitializeAArch64TargetInfo();
+  LLVMInitializeAArch64Target();
+  LLVMInitializeAArch64TargetMC();
+  LLVMInitializeAArch64AsmPrinter();
+#endif
+#if TF_LLVM_HEXAGON_AVAILABLE
+  LLVMInitializeHexagonTargetInfo();
+  LLVMInitializeHexagonTarget();
+  LLVMInitializeHexagonTargetMC();
+  LLVMInitializeHexagonAsmPrinter();
+#endif
+#if TF_LLVM_POWERPC_AVAILABLE
+  LLVMInitializePowerPCTargetInfo();
+  LLVMInitializePowerPCTarget();
+  LLVMInitializePowerPCTargetMC();
+  LLVMInitializePowerPCAsmPrinter();
+#endif
+#if TF_LLVM_S390X_AVAILABLE
+  LLVMInitializeSystemZTargetInfo();
+  LLVMInitializeSystemZTarget();
+  LLVMInitializeSystemZTargetMC();
+  LLVMInitializeSystemZAsmPrinter();
+#endif
+#if TF_LLVM_X86_AVAILABLE
+  LLVMInitializeX86TargetInfo();
+  LLVMInitializeX86Target();
+  LLVMInitializeX86TargetMC();
+  LLVMInitializeX86AsmPrinter();
+#endif
+}
+
 int main(int argc, char* argv[]) {
-  llvm::InitializeAllTargetInfos();
-  llvm::InitializeAllTargets();
-  llvm::InitializeAllTargetMCs();
-  llvm::InitializeAllAsmParsers();
-  llvm::InitializeAllAsmPrinters();
+  InitializeTargets();
 
   std::optional<Args> args = ParseArgs(argc, argv);
   if (!args) {
